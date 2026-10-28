@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenkai — Autonomous AI Recovery Layer for Mission-Critical Workflows</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glow-cyan { box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35); }
+    .glow-emerald { box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.35); }
+    .glow-rose { box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.35); }
+    @keyframes pulse-ring { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 0.4; } 100% { transform: scale(0.95); opacity: 0.8; } }
+    .pulse-effect { animation: pulse-ring 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="glass-card border-b border-slate-800/80 sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-emerald-400 flex items-center justify-center font-extrabold text-white shadow-lg">
+        <i class="fa-solid fa-shield-halved text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">ZENKAI</span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase tracking-widest">Self-Healing AI</span>
+        </div>
+        <p class="text-xs text-slate-400">Autonomous Error Detection & Deterministic Recovery Layer</p>
+      </div>
+    </div>
+
+    <!-- METRICS TICKER -->
+    <div class="hidden lg:flex items-center gap-6">
+      <div class="text-right">
+        <div class="text-[11px] text-slate-400 uppercase tracking-wider">Total Workflows</div>
+        <div id="stat-total" class="text-base font-bold text-slate-100 mono">0</div>
+      </div>
+      <div class="h-7 w-[1px] bg-slate-800"></div>
+      <div class="text-right">
+        <div class="text-[11px] text-slate-400 uppercase tracking-wider">Healed Autonomously</div>
+        <div id="stat-healed" class="text-base font-bold text-emerald-400 mono">0</div>
+      </div>
+      <div class="h-7 w-[1px] bg-slate-800"></div>
+      <div class="text-right">
+        <div class="text-[11px] text-slate-400 uppercase tracking-wider">Safety Invariants Enforced</div>
+        <div id="stat-invariants" class="text-base font-bold text-cyan-400 mono">0</div>
+      </div>
+      <div class="h-7 w-[1px] bg-slate-800"></div>
+      <div class="text-right">
+        <div class="text-[11px] text-slate-400 uppercase tracking-wider">Active Hot-Adapters</div>
+        <div id="stat-adapters" class="text-base font-bold text-indigo-400 mono">0</div>
+      </div>
+    </div>
+
+    <!-- STATUS INDICATOR -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 text-xs font-semibold">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>Mesh Online</span>
+      </div>
+      <button onclick="resetSystem()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors flex items-center gap-1.5">
+        <i class="fa-solid fa-rotate-right"></i> Reset State
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD LAYOUT -->
+  <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1750px] mx-auto w-full">
+
+    <!-- LEFT COLUMN: STUDENT EXPERIENCE (MOBILE VIEW) -->
+    <section class="lg:col-span-3 flex flex-col gap-4">
+      <div class="glass-card rounded-2xl p-4 flex-1 flex flex-col shadow-xl">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-mobile-screen-button text-cyan-400 text-sm"></i>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300">Student Portal App</h2>
+          </div>
+          <span class="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-400 font-mono">v3.2-live</span>
+        </div>
+
+        <!-- Student Info Card -->
+        <div class="mt-4 p-4 rounded-xl bg-slate-900/90 border border-slate-800/80">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center font-bold text-white text-base">
+              AS
+            </div>
+            <div>
+              <div class="font-bold text-slate-100 text-sm">Aarav Sharma</div>
+              <div class="text-xs text-slate-400 font-mono">STU-8821 • B.Tech Computer Science</div>
+              <div class="text-[11px] text-amber-400 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Add/Drop Closes: 11:59 PM</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target Course Card -->
+        <div class="mt-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">CAPSTONE</span>
+              <h3 class="text-sm font-bold text-slate-100 mt-1.5">CS-499: Senior Capstone Project</h3>
+              <p class="text-xs text-slate-400">4 Credits • Mandatory for Graduation</p>
+            </div>
+            <span class="text-xs font-mono text-cyan-400">Term: 2026-FALL</span>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-col gap-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Tuition Clearance:</span>
+              <span class="text-emerald-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> ₹12,500 Paid</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Advisor Sign-off:</span>
+              <span class="text-emerald-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> Dr. Menon</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-time Status Card -->
+        <div class="mt-4 p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex-1 flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Registration Status</div>
+            <div id="student-status-badge" class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold">
+              <i class="fa-solid fa-hourglass-start"></i> Ready to Enroll
+            </div>
+            <p id="student-status-message" class="text-xs text-slate-400 mt-2">
+              Prerequisites verified. Ready to submit registration to University Central ERP.
+            </p>
+          </div>
+
+          <!-- Canvas LMS Unlock Box -->
+          <div id="lms-access-box" class="mt-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800 hidden">
+            <div class="flex items-center gap-2 text-xs font-bold text-emerald-400">
+              <i class="fa-solid fa-graduation-cap text-base"></i> Canvas LMS Unlocked
+            </div>
+            <a id="lms-link" href="#" target="_blank" class="mt-2 block text-center py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all">
+              Open Canvas Course Space &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER COLUMN: CHAOS MONKEY & PIPELINE DAG -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+
+      <!-- CHAOS MONKEY INJECTION BAR -->
+      <div class="glass-card rounded-2xl p-5 shadow-xl border border-slate-800">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Interactive Chaos Monkey</h2>
+          </div>
+          <span class="text-[11px] text-slate-400 font-medium">Inject failure & test self-healing</span>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Button 1: Schema Drift -->
+          <button onclick="triggerWorkflow('SCHEMA_DRIFT')" class="p-3 rounded-xl bg-gradient-to-b from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 border border-cyan-800/40 hover:border-cyan-500/80 text-left transition-all group flex flex-col justify-between">
+            <div>
+              <div class="text-cyan-400 text-xs font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt"></i> Schema Drift
+              </div>
+              <div class="text-[11px] text-slate-300 font-medium mt-1">Contract v2.4 Drift</div>
+              <div class="text-[10px] text-slate-400 mt-1">Client sends <code class="text-cyan-300">semester_id</code> instead of <code class="text-cyan-300">term_id</code></div>
+            </div>
+            <div class="mt-3 text-[10px] font-bold text-cyan-400 group-hover:translate-x-1 transition-transform">Run Test &rarr;</div>
+          </button>
+
+          <!-- Button 2: Timeout Reconciliation -->
+          <button onclick="triggerWorkflow('TIMEOUT')" class="p-3 rounded-xl bg-gradient-to-b from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 border border-amber-800/40 hover:border-amber-500/80 text-left transition-all group flex flex-col justify-between">
+            <div>
+              <div class="text-amber-400 text-xs font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-clock-rotate-left"></i> 504 Timeout
+              </div>
+              <div class="text-[11px] text-slate-300 font-medium mt-1">Socket Drop</div>
+              <div class="text-[10px] text-slate-400 mt-1">Reconciles state & prevents duplicate enrollment</div>
+            </div>
+            <div class="mt-3 text-[10px] font-bold text-amber-400 group-hover:translate-x-1 transition-transform">Run Test &rarr;</div>
+          </button>
+
+          <!-- Button 3: Unsafe Proposal Injection -->
+          <button onclick="triggerWorkflow('UNSAFE_PROPOSAL')" class="p-3 rounded-xl bg-gradient-to-b from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 border border-rose-800/40 hover:border-rose-500/80 text-left transition-all group flex flex-col justify-between">
+            <div>
+              <div class="text-rose-400 text-xs font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-triangle-exclamation"></i> Unsafe Patch
+              </div>
+              <div class="text-[11px] text-slate-300 font-medium mt-1">Rogue AI Defense</div>
+              <div class="text-[10px] text-slate-400 mt-1">AI tries to forge clearance; Validator blocks it!</div>
+            </div>
+            <div class="mt-3 text-[10px] font-bold text-rose-400 group-hover:translate-x-1 transition-transform">Test Shield &rarr;</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- WORKFLOW DAG PIPELINE VISUALIZER -->
+      <div class="glass-card rounded-2xl p-5 shadow-xl flex-1 flex flex-col border border-slate-800">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-indigo-400 text-sm"></i>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Self-Healing Pipeline (DAG)</h2>
+          </div>
+          <div id="dag-overall-status" class="text-xs font-mono text-slate-400">IDLE</div>
+        </div>
+
+        <div class="mt-5 flex-1 flex flex-col justify-center gap-4">
+
+          <!-- Step 1: Fee Clearance -->
+          <div id="dag-step-1" class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 transition-all flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs step-icon">1</div>
+              <div>
+                <div class="text-xs font-bold text-slate-200">Finance Clearance</div>
+                <div class="text-[11px] text-slate-400 step-desc">Verify student tuition fee payment record</div>
+              </div>
+            </div>
+            <span class="text-xs font-mono text-slate-500 step-status">PENDING</span>
+          </div>
+
+          <div class="flex justify-center -my-2 text-slate-700 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <!-- Step 2: Advisor Approval -->
+          <div id="dag-step-2" class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 transition-all flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs step-icon">2</div>
+              <div>
+                <div class="text-xs font-bold text-slate-200">Advisor Sign-off</div>
+                <div class="text-[11px] text-slate-400 step-desc">Verify department faculty approval signature</div>
+              </div>
+            </div>
+            <span class="text-xs font-mono text-slate-500 step-status">PENDING</span>
+          </div>
+
+          <div class="flex justify-center -my-2 text-slate-700 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <!-- Step 3: Registration ERP (The Failure & Recovery Point) -->
+          <div id="dag-step-3" class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 transition-all flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs step-icon">3</div>
+              <div>
+                <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  Registration ERP
+                  <span id="erp-healed-tag" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">AUTONOMOUSLY HEALED</span>
+                </div>
+                <div class="text-[11px] text-slate-400 step-desc">Destination Central Student Information System</div>
+              </div>
+            </div>
+            <span class="text-xs font-mono text-slate-500 step-status">PENDING</span>
+          </div>
+
+          <div class="flex justify-center -my-2 text-slate-700 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+          <!-- Step 4: LMS Course Access -->
+          <div id="dag-step-4" class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 transition-all flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs step-icon">4</div>
+              <div>
+                <div class="text-xs font-bold text-slate-200">Canvas LMS Provisioning</div>
+                <div class="text-[11px] text-slate-400 step-desc">Verify confirmed enrollment and unlock course workspace</div>
+              </div>
+            </div>
+            <span class="text-xs font-mono text-slate-500 step-status">PENDING</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: INCIDENT & RECOVERY INSPECTOR -->
+    <section class="lg:col-span-4 flex flex-col gap-6">
+
+      <div class="glass-card rounded-2xl p-5 shadow-xl flex-1 flex flex-col border border-slate-800">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-microchip text-cyan-400 text-sm"></i>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-200">Zenkai Recovery Inspector</h2>
+          </div>
+          <span id="incident-pill" class="text-[10px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-mono">NO INCIDENT</span>
+        </div>
+
+        <div id="inspector-content" class="mt-4 flex-1 flex flex-col justify-center text-center text-slate-500 text-xs">
+          <i class="fa-solid fa-shield-cat text-4xl mb-3 text-slate-700"></i>
+          <p>System healthy. Waiting for failure trigger.</p>
+          <p class="text-[11px] text-slate-600 mt-1">Click any Chaos Monkey button to simulate a breakdown.</p>
+        </div>
+
+        <!-- ACTIVE INCIDENT DETAILS CONTAINER (HIDDEN INITIALLY) -->
+        <div id="incident-details-box" class="mt-4 flex-1 flex-col gap-3 hidden overflow-y-auto max-h-[600px] pr-1">
+
+          <!-- Root Cause Card -->
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider font-bold text-cyan-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-brain"></i> AI Root-Cause Diagnosis
+            </div>
+            <p id="inc-root-cause" class="text-xs text-slate-200 mt-1.5 font-medium leading-relaxed"></p>
+            <div id="inc-citations" class="mt-2 text-[10px] font-mono text-slate-400 bg-slate-950/70 p-2 rounded border border-slate-800/80"></div>
+          </div>
+
+          <!-- Payload Diff Viewer -->
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider font-bold text-indigo-400 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-code-compare"></i> Synthesized Patch Diff</span>
+              <span id="patch-type-badge" class="text-[10px] font-mono text-indigo-300"></span>
+            </div>
+            <div class="mt-2 text-[11px] font-mono p-2.5 rounded bg-slate-950 border border-slate-800 overflow-x-auto space-y-1">
+              <div id="diff-content" class="leading-relaxed"></div>
+            </div>
+          </div>
+
+          <!-- Deterministic Validator Checklist -->
+          <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div class="text-[11px] uppercase tracking-wider font-bold text-emerald-400 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-list-check"></i> Deterministic Safety Gate</span>
+              <span id="validator-status-badge" class="text-[10px] font-mono"></span>
+            </div>
+            <div id="validator-checks-list" class="mt-2.5 space-y-1.5"></div>
+          </div>
+
+          <!-- Recovery Duration & Verdict Banner -->
+          <div id="verdict-banner" class="p-3.5 rounded-xl text-center font-bold text-xs"></div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    async function updateStats() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        document.getElementById('stat-total').innerText = data.metrics.total_workflows;
+        document.getElementById('stat-healed').innerText = data.metrics.healed_workflows;
+        document.getElementById('stat-invariants').innerText = data.metrics.invariants_enforced;
+        document.getElementById('stat-adapters').innerText = Object.keys(data.active_adapters).length;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function resetSystem() {
+      try {
+        await fetch('/api/reset', { method: 'POST' });
+        window.location.reload();
+      } catch (e) {
+        alert('Reset failed: ' + e);
+      }
+    }
+
+    async function triggerWorkflow(scenario) {
+      // Set UI to loading state
+      document.getElementById('dag-overall-status').innerText = 'EXECUTING WORKFLOW...';
+      document.getElementById('student-status-badge').className = 'mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-950 text-indigo-300 text-xs font-bold pulse-effect';
+      document.getElementById('student-status-badge').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting to Central ERP...';
+      document.getElementById('lms-access-box').classList.add('hidden');
+
+      // Reset step styles
+      for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`dag-step-${i}`);
+        step.className = 'p-4 rounded-xl bg-slate-900/80 border border-slate-800 transition-all flex items-center justify-between';
+        step.querySelector('.step-status').innerText = 'PENDING';
+        step.querySelector('.step-status').className = 'text-xs font-mono text-slate-500 step-status';
+      }
+      document.getElementById('erp-healed-tag').classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/workflows/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            student_id: 'STU-8821',
+            student_name: 'Aarav Sharma',
+            course_code: 'CS-499',
+            course_title: 'Senior Capstone Project',
+            term_id: 'SEM-2026-FALL',
+            scenario: scenario,
+            auto_approve: true
+          })
+        });
+
+        const data = await res.json();
+        renderWorkflowResult(data);
+        await updateStats();
+      } catch (e) {
+        alert('Failed to trigger workflow: ' + e);
+      }
+    }
+
+    function renderWorkflowResult(data) {
+      const wf = data.workflow;
+      const inc = data.incident;
+
+      // Render Step 1
+      const s1 = document.getElementById('dag-step-1');
+      s1.className = 'p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/80 flex items-center justify-between';
+      s1.querySelector('.step-status').innerText = 'VERIFIED';
+      s1.querySelector('.step-status').className = 'text-xs font-mono text-emerald-400 font-bold step-status';
+
+      // Render Step 2
+      const s2 = document.getElementById('dag-step-2');
+      s2.className = 'p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/80 flex items-center justify-between';
+      s2.querySelector('.step-status').innerText = 'SIGNED';
+      s2.querySelector('.step-status').className = 'text-xs font-mono text-emerald-400 font-bold step-status';
+
+      // Render Step 3 (Registration ERP)
+      const s3 = document.getElementById('dag-step-3');
+      const regStep = wf.steps['REGISTRATION'];
+      if (regStep.status === 'RECOVERED') {
+        s3.className = 'p-4 rounded-xl bg-emerald-950/50 border border-emerald-500 glow-emerald flex items-center justify-between';
+        s3.querySelector('.step-status').innerText = 'HEALED & CONFIRMED';
+        s3.querySelector('.step-status').className = 'text-xs font-mono text-emerald-400 font-bold step-status';
+        document.getElementById('erp-healed-tag').classList.remove('hidden');
+      } else if (regStep.status === 'FAILED') {
+        s3.className = 'p-4 rounded-xl bg-rose-950/50 border border-rose-500 glow-rose flex items-center justify-between';
+        s3.querySelector('.step-status').innerText = 'BLOCKED BY SAFETY';
+        s3.querySelector('.step-status').className = 'text-xs font-mono text-rose-400 font-bold step-status';
+      } else {
+        s3.className = 'p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/80 flex items-center justify-between';
+        s3.querySelector('.step-status').innerText = 'SUCCESS';
+        s3.querySelector('.step-status').className = 'text-xs font-mono text-emerald-400 font-bold step-status';
+      }
+
+      // Render Step 4 (LMS Canvas)
+      const s4 = document.getElementById('dag-step-4');
+      const lmsStep = wf.steps['COURSE_ACCESS'];
+      if (lmsStep.status === 'SUCCESS') {
+        s4.className = 'p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/80 flex items-center justify-between';
+        s4.querySelector('.step-status').innerText = 'UNLOCKED';
+        s4.querySelector('.step-status').className = 'text-xs font-mono text-emerald-400 font-bold step-status';
+
+        // Unlock student portal
+        document.getElementById('student-status-badge').className = 'mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs font-bold';
+        document.getElementById('student-status-badge').innerHTML = '<i class="fa-solid fa-circle-check"></i> Enrolled & Provisioned';
+        document.getElementById('student-status-message').innerText = 'Course enrollment confirmed in University ERP. Access unlocked on Canvas LMS.';
+        document.getElementById('lms-access-box').classList.remove('hidden');
+      } else {
+        s4.className = 'p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between';
+        s4.querySelector('.step-status').innerText = 'HALTED';
+        s4.querySelector('.step-status').className = 'text-xs font-mono text-slate-500 step-status';
+
+        document.getElementById('student-status-badge').className = 'mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-950 text-rose-400 border border-rose-800 text-xs font-bold';
+        document.getElementById('student-status-badge').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Registration Halted';
+        document.getElementById('student-status-message').innerText = 'Safety violation blocked execution. Course access denied to protect data integrity.';
+      }
+
+      // Render Inspector Panel
+      if (inc) {
+        document.getElementById('inspector-content').classList.add('hidden');
+        document.getElementById('incident-details-box').classList.remove('hidden');
+        document.getElementById('incident-details-box').classList.add('flex');
+
+        const pill = document.getElementById('incident-pill');
+        pill.innerText = inc.status;
+        pill.className = inc.status === 'RECOVERED'
+          ? 'text-[10px] px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono font-bold'
+          : 'text-[10px] px-2.5 py-1 rounded-full bg-rose-950 text-rose-400 border border-rose-800 font-mono font-bold';
+
+        // Root cause & citations
+        document.getElementById('inc-root-cause').innerText = inc.patch_proposal ? inc.patch_proposal.root_cause : inc.error_message;
+        const citations = inc.patch_proposal ? inc.patch_proposal.evidence_citations.join('<br>• ') : 'No citations';
+        document.getElementById('inc-citations').innerHTML = '• ' + citations;
+
+        // Diff
+        document.getElementById('patch-type-badge').innerText = inc.patch_proposal ? inc.patch_proposal.patch_type : 'N/A';
+        let diffHtml = '';
+        if (inc.patch_proposal && Object.keys(inc.patch_proposal.field_mappings).length > 0) {
+          for (const [src, dst] of Object.entries(inc.patch_proposal.field_mappings)) {
+            diffHtml += `<div class="text-rose-400">- "${src}": "${inc.raw_payload[src]}"</div>`;
+            diffHtml += `<div class="text-emerald-400">+ "${dst}": "${inc.patch_proposal.patched_payload[dst]}"</div>`;
+          }
+        } else if (inc.status === 'BLOCKED') {
+          diffHtml = `<div class="text-rose-400">- "bypass_fee": true (REJECTED)</div><div class="text-rose-400">- "student_id": mutated (REJECTED)</div>`;
+        } else {
+          diffHtml = `<div class="text-slate-400">Idempotent replay with hash preserved</div>`;
+        }
+        document.getElementById('diff-content').innerHTML = diffHtml;
+
+        // Validator checks
+        const checksList = document.getElementById('validator-checks-list');
+        checksList.innerHTML = '';
+        if (inc.validation_result) {
+          document.getElementById('validator-status-badge').innerText = inc.validation_result.is_valid ? 'ALL RULES PASSED' : 'VIOLATION CAUGHT';
+          document.getElementById('validator-status-badge').className = inc.validation_result.is_valid ? 'text-[10px] font-mono text-emerald-400' : 'text-[10px] font-mono text-rose-400';
+
+          inc.validation_result.checks.forEach(c => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between text-[11px] p-1.5 rounded bg-slate-950/60 border border-slate-800/60';
+            row.innerHTML = `
+              <span class="text-slate-300">${c.rule}</span>
+              <span class="${c.passed ? 'text-emerald-400' : 'text-rose-400'} font-bold">
+                <i class="fa-solid ${c.passed ? 'fa-check' : 'fa-xmark'} mr-1"></i>${c.passed ? 'PASS' : 'FAIL'}
+              </span>
+            `;
+            checksList.appendChild(row);
+          });
+        }
+
+        // Verdict Banner
+        const verdict = document.getElementById('verdict-banner');
+        if (inc.status === 'RECOVERED') {
+          verdict.className = 'p-3 rounded-xl text-center font-bold text-xs bg-emerald-950/70 border border-emerald-700 text-emerald-300';
+          verdict.innerHTML = `<i class="fa-solid fa-circle-check mr-1.5"></i> Autonomously Recovered in ${inc.recovery_duration_ms} ms with Zero Data Loss`;
+        } else if (inc.status === 'BLOCKED') {
+          verdict.className = 'p-3 rounded-xl text-center font-bold text-xs bg-rose-950/70 border border-rose-700 text-rose-300';
+          verdict.innerHTML = `<i class="fa-solid fa-shield-virus mr-1.5"></i> Deterministic Safety Invariant Triggered: Malicious/Hallucinated Patch Blocked`;
+        }
+      }
+    }
+
+    // Initial load
+    updateStats();
+  </script>
+</body>
+</html>
