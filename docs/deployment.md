@@ -84,20 +84,21 @@ curl --fail https://synapes-dev.online/api/health
 curl --fail https://demo.synapes-dev.online/api/portal
 ```
 
-## Two-hour stop and cleanup
+## Manual stop and cleanup
 
-Once the demo is ready, schedule the new dedicated host to stop:
+The instance keeps running until the owner stops it. No automatic shutdown is
+required. When the demonstration is finished, stop the dedicated instance from
+the EC2 console or run this on that host:
 
 ```bash
-sudo systemd-run --unit=zenkai-demo-stop --on-active=2h /sbin/poweroff
-systemctl list-timers zenkai-demo-stop.timer
+sudo poweroff
 ```
 
 EC2 must use instance-initiated shutdown behavior `stop`. This stops compute;
 the disk remains billable and the public IP can change on restart. Export any
 needed evidence, then terminate the temporary instance and delete its dedicated
-security group and imported public key when finished. Never apply this timer
-or cleanup to an existing shared server.
+security group and imported public key when finished. Apply this cleanup only
+to the dedicated temporary demo resources.
 
 Stopping/recreating the stack preserves its database and telemetry volumes.
 Do not use `docker compose down -v` unless intentionally deleting that data.
