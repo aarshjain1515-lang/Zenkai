@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="#watch-the-demo">Video demo</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#how-a-recovery-works">Recovery walkthrough</a> ·
   <a href="#run-locally">Run locally</a> ·
@@ -16,6 +17,14 @@
 </p>
 
 ---
+
+## Watch the demo
+
+**[Watch or download the 3-minute Zenkai demo](https://github.com/arnavsx3/Zenkai/raw/refs/heads/main/docs/assets/zenkai-demo-3min.mp4)**
+
+[![Watch the 3-minute Zenkai demo](docs/assets/zenkai-console.jpg)](https://github.com/arnavsx3/Zenkai/raw/refs/heads/main/docs/assets/zenkai-demo-3min.mp4)
+
+See the running console and separate demo target, failure injection, and the recovery workflow. Click the preview or link above to open the MP4 recording.
 
 ## Try the live demo — no password needed
 
