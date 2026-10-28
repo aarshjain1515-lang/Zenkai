@@ -390,3 +390,32 @@
   .campus-ribbon a { font-size: 10px; }
   .campus-greeting h1 { font-size: 39px; }
 }
+
+/* A short, actionable walkthrough in the same card language as the workspace. */
+.demo-guide { margin-bottom: 28px; overflow: hidden; }
+.demo-guide-heading { padding: 26px 26px 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.demo-guide-heading .eyebrow { display: flex; align-items: center; gap: 8px; }
+.demo-guide-heading h2 { margin-top: 12px; font-size: 24px; line-height: 1.4; letter-spacing: -.5px; color: #243d2e; }
+.demo-guide-heading p { margin-top: 9px; max-width: 690px; color: var(--text-muted); font-size: 15px; line-height: 1.7; }
+.demo-guide-badge { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; border: 1px solid #dce6d8; background: #edf4e8; color: #426342; padding: 8px 11px; border-radius: 7px; font-size: 12px; white-space: nowrap; }
+.demo-guide-steps { list-style: none; margin: 0; padding: 0 26px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.demo-guide-step { display: flex; flex-direction: column; padding: 21px; border: 1px solid #e3e9df; border-radius: 10px; background: #fbfcf9; min-width: 0; }
+.demo-guide-step-top { display: flex; justify-content: space-between; align-items: center; color: #71856a; margin-bottom: 16px; }
+.demo-guide-number { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: #e8f0df; color: #49633d; font-size: 12px; font-weight: 700; }
+.demo-guide-step h3 { font-size: 16px; line-height: 1.5; font-weight: 650; color: #2b4433; }
+.demo-guide-step p { margin: 9px 0 18px; font-size: 14px; line-height: 1.75; color: #65765e; }
+.demo-guide-action { display: inline-flex; align-items: center; align-self: flex-start; gap: 8px; margin-top: auto; min-height: 34px; padding: 4px 0; background: transparent; color: #2d6b49; font-size: 13px; font-weight: 600; text-align: left; }
+.demo-guide-action:hover { color: #18462c; text-decoration: underline; text-underline-offset: 4px; }
+.demo-guide-footer { display: flex; align-items: flex-start; gap: 10px; padding: 17px 26px; border-top: 1px solid #e5ebdf; background: #f5f8f0; color: #6b7d5e; }
+.demo-guide-footer > svg { flex-shrink: 0; margin-top: 3px; }
+.demo-guide-footer p { font-size: 13px; line-height: 1.7; }
+.demo-guide-footer strong { font-weight: 600; color: #4d6543; }
+@media (max-width: 1100px) { .demo-guide-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+  .demo-guide-heading { padding: 23px 20px 20px; flex-direction: column; gap: 14px; }
+  .demo-guide-heading h2 { font-size: 23px; }
+  .demo-guide-heading p { font-size: 14px; }
+  .demo-guide-steps { grid-template-columns: minmax(0, 1fr); padding: 0 20px 20px; gap: 12px; }
+  .demo-guide-step { padding: 19px; }
+  .demo-guide-footer { padding: 17px 20px; }
+}

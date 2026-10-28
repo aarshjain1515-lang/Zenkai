@@ -25,7 +25,7 @@
 | **[Separate demo target](https://demo.synapes-dev.online/campus)** | The fictional university portal that Zenkai monitors and repairs |
 | **[Live Grafana dashboard](https://grafana.synapes-dev.online/d/zenkai-overview)** | Real request rates, latency, errors, and service logs |
 
-**Judges can explore and run the demonstration immediately. No account, sign-in, or password is required.**
+**Judges can explore and run the demonstration immediately. No account, sign-in, or password is required.** The home page includes a six-step walkthrough with shortcuts to the target, Failure lab, incidents, evidence, and live dashboard.
 
 1. Open the console and demo target side by side.
 2. In **Failure lab**, start the three-minute traffic test.
