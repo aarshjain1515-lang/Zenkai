@@ -1,0 +1,18 @@
+{$ZENKAI_DOMAIN} {
+	encode zstd gzip
+	@api path /api/*
+	reverse_proxy @api api:8000 {
+		flush_interval -1
+	}
+	reverse_proxy console:80
+}
+
+demo.{$ZENKAI_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy gateway:80
+}
+
+grafana.{$ZENKAI_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy grafana:3000
+}

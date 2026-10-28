@@ -351,6 +351,10 @@ These mechanisms provide guarded execution and durable history, not an exactly-o
 
 ## Run locally
 
+For a dedicated temporary cloud host with custom-domain HTTPS, see the
+[EC2 deployment guide](docs/deployment.md). It uses separate database state
+so the cloud worker cannot interfere with a running local demonstration.
+
 ### 1. Prerequisites
 
 - Docker Engine with the Docker Compose plugin and access to the local Docker daemon.

@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     portal_url: str = "http://localhost:8100"
     operator_password: str = ""
     session_secret: str = ""
+    secure_cookies: bool = False
     lab_token: str = ""
     log_dir: Path = Path("logs")
     gateway_config_dir: Path = Path("runtime/gateway")

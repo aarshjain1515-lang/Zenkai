@@ -29,7 +29,7 @@ def create_app(config=None, database=None):
 
     app = FastAPI(title="Zenkai control plane", lifespan=lifespan)
     app.add_middleware(SessionMiddleware, secret_key=config.session_secret or secrets.token_hex(32),
-                       same_site="strict", https_only=False)
+                       same_site="strict", https_only=config.secure_cookies)
     app.state.db = db
 
     def operator(request: Request):

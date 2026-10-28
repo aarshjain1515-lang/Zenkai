@@ -1,0 +1,78 @@
+# Overlay for a dedicated, temporary demo host. Keep the project name "zenkai":
+# the allowlisted connector and k6 use its container, network, and volume names.
+services:
+  api:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://zenkai:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/zenkai
+      DATABASE_URL_UNPOOLED: postgresql://zenkai:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/zenkai
+      SECURE_COOKIES: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  worker:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://zenkai:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/zenkai
+      DATABASE_URL_UNPOOLED: postgresql://zenkai:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/zenkai
+    depends_on:
+      postgres:
+        condition: service_healthy
+  portal:
+    # The failure lab deliberately stops this service; the worker must recover it.
+    restart: "no"
+  gateway:
+    restart: unless-stopped
+  console:
+    restart: unless-stopped
+    build:
+      dockerfile: deploy/Dockerfile.web
+      args:
+        VITE_PORTAL_URL: https://demo.${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}/campus
+        VITE_GRAFANA_URL: https://grafana.${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}/d/zenkai-overview
+  prometheus:
+    restart: unless-stopped
+  loki:
+    restart: unless-stopped
+  alloy:
+    restart: unless-stopped
+  grafana:
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: https://grafana.${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}
+      GF_SECURITY_COOKIE_SECURE: "true"
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zenkai
+      POSTGRES_USER: zenkai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U zenkai -d zenkai"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      ZENKAI_DOMAIN: ${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+      - console
+      - gateway
+      - grafana
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

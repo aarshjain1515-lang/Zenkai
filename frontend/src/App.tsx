@@ -15,8 +15,8 @@ type Session = {authenticated:boolean;csrf?:string};
 
 async function get<T,>(url:string):Promise<T>{const r=await fetch(url); if(!r.ok)throw new Error('Could not reach Zenkai');return r.json();}
 const host=window.location.hostname;
-const portalLink=`http://${host}:8080/campus`;
-const grafanaLink=`http://${host}:3300/d/zenkai-overview`;
+const portalLink=import.meta.env.VITE_PORTAL_URL || `http://${host}:8080/campus`;
+const grafanaLink=import.meta.env.VITE_GRAFANA_URL || `http://${host}:3300/d/zenkai-overview`;
 const label=(value:string)=>value.replaceAll('_',' ');
 const when=(seconds:number)=>new Date(seconds*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const number=(value:number|null|undefined,digits=0)=>value==null?'—':value.toLocaleString(undefined,{maximumFractionDigits:digits});
