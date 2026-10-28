@@ -22,6 +22,10 @@ coverage/
 # Runtime state and telemetry
 data/
 logs/
+runtime/
+.uv-cache/
+.ruff_cache/
+*.egg-info/
 *.log
 *.db
 *.db-*
