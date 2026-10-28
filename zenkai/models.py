@@ -21,6 +21,7 @@ class StepStatus(str, Enum):
     NEEDS_HUMAN = "NEEDS_HUMAN"
     VERIFICATION_FAILED = "VERIFICATION_FAILED"
     ROLLED_BACK = "ROLLED_BACK"
+    ADAPTER_DISABLED = "ADAPTER_DISABLED"
 
 
 class IncidentStatus(str, Enum):
@@ -36,6 +37,7 @@ class IncidentStatus(str, Enum):
     VERIFICATION_FAILED = "VERIFICATION_FAILED"
     ROLLED_BACK = "ROLLED_BACK"
     NEEDS_HUMAN = "NEEDS_HUMAN"
+    ADAPTER_DISABLED = "ADAPTER_DISABLED"
 
 
 class FailureScenario(str, Enum):
@@ -131,6 +133,7 @@ class PatchProposal(BaseModel):
     confidence: float = 0.95
     schema_version: str = "v2.4"
     proposal_hash: Optional[str] = None
+    injected_test_input: bool = False
 
 
 class StepExecution(BaseModel):
@@ -157,6 +160,7 @@ class IncidentRecord(BaseModel):
     retry_count: int = 0
     max_retries: int = 3
     schema_version: str = "v2.4"
+    injected_test_input: bool = False
     created_at: str
     recovered_at: Optional[str] = None
 

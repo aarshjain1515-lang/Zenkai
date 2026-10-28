@@ -64,6 +64,7 @@ class ZenkaiDatabase:
                     retry_count INTEGER DEFAULT 0,
                     max_retries INTEGER DEFAULT 3,
                     schema_version TEXT DEFAULT 'v2.4',
+                    injected_test_input INTEGER DEFAULT 0,
                     created_at TEXT NOT NULL,
                     recovered_at TEXT,
                     FOREIGN KEY(workflow_id) REFERENCES workflows(workflow_id)
@@ -97,6 +98,11 @@ class ZenkaiDatabase:
                     created_at TEXT NOT NULL
                 );
             """)
+            # Schema evolution check for existing tables
+            cursor = conn.execute("PRAGMA table_info(incidents);")
+            cols = [r["name"] for r in cursor.fetchall()]
+            if cols and "injected_test_input" not in cols:
+                conn.execute("ALTER TABLE incidents ADD COLUMN injected_test_input INTEGER DEFAULT 0;")
             conn.commit()
 
     # --- Workflows ---
@@ -171,8 +177,8 @@ class ZenkaiDatabase:
                     incident_id, workflow_id, failed_step, error_code,
                     error_message, raw_payload_json, status, proposal_hash,
                     proposal_json, validation_json, recovery_seconds,
-                    retry_count, max_retries, schema_version, created_at, recovered_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    retry_count, max_retries, schema_version, injected_test_input, created_at, recovered_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(incident_id) DO UPDATE SET
                     status=excluded.status,
                     proposal_hash=excluded.proposal_hash,
@@ -180,6 +186,7 @@ class ZenkaiDatabase:
                     validation_json=excluded.validation_json,
                     recovery_seconds=excluded.recovery_seconds,
                     retry_count=excluded.retry_count,
+                    injected_test_input=excluded.injected_test_input,
                     recovered_at=excluded.recovered_at
             """, (
                 inc["incident_id"],
@@ -196,6 +203,7 @@ class ZenkaiDatabase:
                 inc.get("retry_count", 0),
                 inc.get("max_retries", 3),
                 inc.get("schema_version", "v2.4"),
+                1 if inc.get("injected_test_input") else 0,
                 inc["created_at"],
                 inc.get("recovered_at"),
             ))
@@ -230,6 +238,7 @@ class ZenkaiDatabase:
             "retry_count": row["retry_count"],
             "max_retries": row["max_retries"],
             "schema_version": row["schema_version"],
+            "injected_test_input": bool(row["injected_test_input"]) if "injected_test_input" in row.keys() else False,
             "created_at": row["created_at"],
             "recovered_at": row["recovered_at"],
         }
@@ -310,6 +319,11 @@ class ZenkaiDatabase:
         with self._get_connection() as conn:
             rows = conn.execute("SELECT src_field, dst_field FROM adapters").fetchall()
             return {r["src_field"]: r["dst_field"] for r in rows}
+
+    def list_adapters_with_metadata(self) -> Dict[str, Dict[str, str]]:
+        with self._get_connection() as conn:
+            rows = conn.execute("SELECT src_field, dst_field, schema_version FROM adapters").fetchall()
+            return {r["src_field"]: {"dst_field": r["dst_field"], "schema_version": r["schema_version"]} for r in rows}
 
     def clear_all(self):
         with self._get_connection() as conn:

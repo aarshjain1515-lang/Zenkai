@@ -14,6 +14,7 @@ from zenkai.models import (
     IncidentRecord,
     IncidentStatus,
     PatchProposal,
+    PatchType,
     StepExecution,
     StepName,
     StepStatus,
@@ -177,15 +178,65 @@ class ZenkaiEngine:
 
         # Check if an active hot-patch adapter applies
         effective_payload = dict(reg_payload)
-        self.active_adapters = self.db.list_adapters()
-        if self.active_adapters:
-            for src_field, dst_field in self.active_adapters.items():
+        adapters_with_meta = self.db.list_adapters_with_metadata()
+        target_schema = "v2.4"
+
+        if adapters_with_meta:
+            for src_field, meta in list(adapters_with_meta.items()):
+                # Do not reuse hot-patch when schema/contract version differs
+                if meta["schema_version"] != target_schema:
+                    self.log_event("zenkai_gateway", "HOT_PATCH_SKIPPED_SCHEMA_VERSION_MISMATCH", {
+                        "src_field": src_field,
+                        "adapter_schema_version": meta["schema_version"],
+                        "target_schema_version": target_schema,
+                    }, workflow_id=workflow_id, reason="Contract version mismatch prevents reuse")
+                    continue
+
+                dst_field = meta["dst_field"]
                 if src_field in effective_payload:
-                    effective_payload[dst_field] = effective_payload.pop(src_field)
+                    temp_payload = dict(effective_payload)
+                    temp_payload[dst_field] = temp_payload.pop(src_field)
+
+                    # RUN VALIDATOR ON THE HOT-PATCHED PAYLOAD IMMEDIATELY BEFORE DISPATCH
+                    candidate_proposal = PatchProposal(
+                        patch_id="HOT-PATCH-PROBE",
+                        incident_id="HOT-PATCH-REUSE",
+                        root_cause="Pre-dispatch validation of cached hot-patch adapter",
+                        evidence_citations=["Cached hot-patch adapter"],
+                        patch_type=PatchType.FIELD_MAPPING,
+                        field_mappings={src_field: dst_field},
+                        original_payload=reg_payload,
+                        patched_payload=temp_payload,
+                        requires_human_approval=False,
+                        confidence=1.0,
+                        schema_version=target_schema,
+                    )
+                    pre_val = self.validator.validate(reg_payload, candidate_proposal)
+                    if not pre_val.is_valid:
+                        # DISABLE ADAPTER, LOG IT, AND ESCALATE
+                        self.db.delete_adapter(src_field)
+                        if src_field in self.active_adapters:
+                            del self.active_adapters[src_field]
+
+                        self.log_event("zenkai_gateway", "HOT_PATCH_VALIDATION_FAILED_DISABLED", {
+                            "disabled_adapter": src_field,
+                            "rejection_reason": pre_val.rejection_reason,
+                        }, workflow_id=workflow_id, reason="Pre-dispatch validation failed on hot-patch")
+
+                        s3.status = StepStatus.ADAPTER_DISABLED
+                        s3.details = f"Hot-patch adapter '{src_field}' failed pre-dispatch validation and was disabled: {pre_val.rejection_reason}"
+                        workflow.status = StepStatus.FAILED
+                        self.metrics["failed_workflows"] += 1
+                        self.db.save_workflow(workflow.model_dump())
+                        return workflow
+
+                    # Pre-dispatch validation passed
+                    effective_payload = temp_payload
                     self.metrics["hot_patches_applied"] += 1
                     self.log_event("zenkai_gateway", "HOT_PATCH_ADAPTER_APPLIED", {
-                        "mapped": f"{src_field} -> {dst_field}"
-                    }, workflow_id=workflow_id, reason="Runtime adapter translation")
+                        "mapped": f"{src_field} -> {dst_field}",
+                        "schema_version": target_schema,
+                    }, workflow_id=workflow_id, reason="Pre-dispatch validated hot-patch applied")
 
         # Configure ERP failure controls based on active scenario
         if workflow.active_scenario == FailureScenario.TIMEOUT:
@@ -280,6 +331,8 @@ class ZenkaiEngine:
         incident_id = f"INC-{uuid.uuid4().hex[:8].upper()}"
         workflow.incident_id = incident_id
 
+        is_injected = (workflow.active_scenario == FailureScenario.UNSAFE_PROPOSAL)
+
         incident = IncidentRecord(
             incident_id=incident_id,
             workflow_id=workflow.workflow_id,
@@ -288,6 +341,7 @@ class ZenkaiEngine:
             error_message=str(response_data.get("message", "Unknown error")),
             raw_payload=raw_payload,
             status=IncidentStatus.DETECTED,
+            injected_test_input=is_injected,
             created_at=now_iso(),
         )
         self.incidents[incident_id] = incident
@@ -297,6 +351,7 @@ class ZenkaiEngine:
             "error_code": incident.error_code,
             "error_message": incident.error_message,
             "failed_step": failed_step.value,
+            "injected_test_input": is_injected,
         }, workflow_id=workflow.workflow_id, incident_id=incident_id, reason="Downstream service failure")
 
         # 1. AI Diagnostic Agent
@@ -322,6 +377,7 @@ class ZenkaiEngine:
             "root_cause": proposal.root_cause,
             "patch_type": proposal.patch_type.value,
             "proposal_hash": proposal.proposal_hash,
+            "injected_test_input": is_injected,
         }, workflow_id=workflow.workflow_id, incident_id=incident_id, reason="AI diagnosis completed")
 
         # 2. Deterministic Safety Validator
@@ -336,6 +392,7 @@ class ZenkaiEngine:
             self.log_event("zenkai_validator", "SAFETY_VIOLATION_BLOCKED", {
                 "rejection_reason": validation.rejection_reason,
                 "checks": [c.model_dump() for c in validation.checks if not c.passed],
+                "injected_test_input": is_injected,
             }, workflow_id=workflow.workflow_id, incident_id=incident_id, reason="Invariant violation")
             return incident
 
