@@ -9,6 +9,7 @@ x-control-environment: &control-environment
   SESSION_SECRET: ${SESSION_SECRET:?Run scripts/init_local.py}
   LAB_TOKEN: ${LAB_TOKEN:?Run scripts/init_local.py}
   AUTO_APPROVE_SAFE: ${AUTO_APPROVE_SAFE:-true}
+  DEMO_ACCESS: ${DEMO_ACCESS:-true}
   TARGET_NAME: ${TARGET_NAME:-University portal · Demo target}
   LOKI_SELECTOR: ${LOKI_SELECTOR:-}
   LOKI_URL: ${LOKI_URL:-http://loki:3100}
@@ -149,6 +150,10 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: ${DEMO_ACCESS:-true}
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: ${DEMO_ACCESS:-true}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/overview.json
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_PLUGINS_PREINSTALL_DISABLED: "true"

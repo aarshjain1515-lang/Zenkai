@@ -12,7 +12,7 @@ python3 scripts/init_local.py
 bash scripts/start.sh
 ```
 
-Open [Grafana](http://localhost:3300/d/zenkai-overview) and sign in as `admin` with the password in `.env`. Prometheus and Loki are preconfigured as data sources. Existing Grafana volumes preserve the original login; changing `.env` later does not reset that account's password.
+Open [Grafana](http://localhost:3300/d/zenkai-overview), or the [live demo dashboard](https://grafana.synapes-dev.online/d/zenkai-overview). No sign-in or password is needed with the default `DEMO_ACCESS=true`: visitors can view dashboards and explore the provisioned Prometheus and Loki data sources anonymously. Administrative maintenance still uses the generated `admin` credential in `.env`; existing volumes preserve that account's original password.
 
 | Service | Local address | Readiness |
 | --- | --- | --- |

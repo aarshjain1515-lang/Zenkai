@@ -23,7 +23,7 @@ before waiting for certificate issuance.
 Allow inbound TCP 80 and 443 publicly and SSH 22 from the operator's IP only.
 All existing app and telemetry host ports bind to loopback. Caddy terminates
 TLS, redirects HTTP, renews certificates, and streams API events directly.
-Grafana requires its generated administrator password.
+The demo enables anonymous Grafana viewing and automatically opens console sessions; judges need no passwords.
 
 ## Install and deploy
 
@@ -38,13 +38,14 @@ Set these values in the ignored, mode-0600 `.env` on that host:
 
 ```dotenv
 ZENKAI_DOMAIN=synapes-dev.online
+DEMO_ACCESS=true
 POSTGRES_PASSWORD=<new random URL-safe password>
 OPENROUTER_API_KEY=<your server-side API key>
 OPENROUTER_MODEL=nvidia/nemotron-3.5-super-vl:free
 ```
 
 The initializer generates the operator, session, lab, and Grafana secrets.
-Keep them separate from the local demo's secrets. The deployment overlay uses
+These are maintenance and internal service credentials; visitors never enter them. Keep them separate from the local demo's secrets. The deployment overlay uses
 its own PostgreSQL container and persistent volume instead of local Neon
 credentials, preventing two workers from controlling different Docker hosts
 through the same job queue. Database and AI settings stay on the server;
@@ -70,7 +71,7 @@ application-crash scenario must be recovered by the worker, not by Docker.
    and telemetry readiness. A configured key alone does not prove inference works.
 2. Check the demo link opens `https://demo.synapes-dev.online/campus` and the
    observability link opens `https://grafana.synapes-dev.online/d/zenkai-overview`.
-3. Sign in with this host's `OPERATOR_PASSWORD`. Check live event updates.
+3. In a fresh browser session, confirm controls and evidence work without signing in. Check live event updates and anonymous Grafana access.
 4. Start bounded k6 traffic in Failure lab, then inject an upstream failure.
 5. Confirm evidence collection, a live AI proposal, policy checks, and measured
    successful requests after repair before describing it as recovered.

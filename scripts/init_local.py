@@ -11,7 +11,7 @@ defaults = {
     "DATABASE_URL": "", "DATABASE_URL_UNPOOLED": "", "OPENROUTER_API_KEY": "",
     "OPENROUTER_MODEL": "nvidia/nemotron-3.5-super-vl:free",
     "OPERATOR_PASSWORD": secrets.token_urlsafe(18), "SESSION_SECRET": secrets.token_urlsafe(32),
-    "LAB_TOKEN": secrets.token_urlsafe(32), "AUTO_APPROVE_SAFE": "true",
+    "LAB_TOKEN": secrets.token_urlsafe(32), "AUTO_APPROVE_SAFE": "true", "DEMO_ACCESS": "true",
 }
 for key, value in defaults.items():
     if key not in existing:

@@ -32,7 +32,12 @@ def create_app(config=None, database=None):
                        same_site="strict", https_only=config.secure_cookies)
     app.state.db = db
 
+    def demo_session(request: Request):
+        if config.demo_access and not request.session.get("operator"):
+            request.session.update(operator=True, csrf=secrets.token_urlsafe(24))
+
     def operator(request: Request):
+        demo_session(request)
         if not request.session.get("operator"):
             raise HTTPException(401, "Sign in to control the recovery lab")
         if request.method != "GET" and not secrets.compare_digest(
@@ -49,7 +54,9 @@ def create_app(config=None, database=None):
 
     @app.get("/api/session")
     async def session(request: Request):
-        return {"authenticated": bool(request.session.get("operator")), "csrf": request.session.get("csrf")}
+        demo_session(request)
+        return {"authenticated": bool(request.session.get("operator")), "csrf": request.session.get("csrf"),
+                "demo_access": config.demo_access}
 
     class Login(BaseModel):
         password: str
@@ -94,7 +101,7 @@ def create_app(config=None, database=None):
                 items = (await session.scalars(select(Incident).order_by(Incident.created_at.desc()).limit(20))).all()
                 for item in items:
                     value = incident_dict(item)
-                    if not request.session.get("operator"):
+                    if not (config.demo_access or request.session.get("operator")):
                         value["evidence"] = []
                     incidents.append(value)
                 rows = (await session.scalars(select(Timeline).order_by(Timeline.id.desc()).limit(40))).all()

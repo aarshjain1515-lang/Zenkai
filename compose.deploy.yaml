@@ -30,6 +30,7 @@ services:
       args:
         VITE_PORTAL_URL: https://demo.${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}/campus
         VITE_GRAFANA_URL: https://grafana.${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}/d/zenkai-overview
+        VITE_CONSOLE_URL: https://${ZENKAI_DOMAIN:?Set ZENKAI_DOMAIN}
   prometheus:
     restart: unless-stopped
   loki:

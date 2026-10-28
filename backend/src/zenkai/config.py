@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     operator_password: str = ""
     session_secret: str = ""
     secure_cookies: bool = False
+    demo_access: bool = False
     lab_token: str = ""
     log_dir: Path = Path("logs")
     gateway_config_dir: Path = Path("runtime/gateway")
@@ -37,8 +38,10 @@ class Settings(BaseSettings):
     docker_project: str = "zenkai"
 
     def missing(self):
-        return [key for key in ("database_url", "openrouter_api_key", "operator_password", "session_secret", "lab_token")
-                if not getattr(self, key)]
+        keys = ["database_url", "openrouter_api_key", "session_secret", "lab_token"]
+        if not self.demo_access:
+            keys.append("operator_password")
+        return [key for key in keys if not getattr(self, key)]
 
 
 @lru_cache
