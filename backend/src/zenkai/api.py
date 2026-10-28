@@ -79,8 +79,8 @@ def create_app(config=None, database=None):
                 try:
                     response = await client.get(f"{config.prometheus_url}/api/v1/query", params={"query": query})
                     rows = response.json()["data"]["result"]
-                    value = float(rows[0]["value"][1]) if rows else 0
-                    result[key] = value if value == value and abs(value) != float("inf") else 0
+                    value = float(rows[0]["value"][1]) if rows else None
+                    result[key] = value if value is not None and value == value and abs(value) != float("inf") else None
                 except Exception:
                     result[key] = None
         return result

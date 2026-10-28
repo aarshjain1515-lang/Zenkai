@@ -35,3 +35,15 @@ def test_gateway_target_is_not_arbitrary():
     with pytest.raises(ValueError):
         gateway_config(22)
     assert "portal:8000" in gateway_config(8000)
+
+
+def test_gateway_initialisation_replaces_image_seed_but_preserves_existing_state(tmp_path):
+    from zenkai.config import Settings
+    from zenkai.connector import initialise_gateway, write_gateway
+    config = Settings(_env_file=None, gateway_config_dir=tmp_path)
+    (tmp_path / "default.conf").write_text("proxy_pass http://api:8000;")
+    initialise_gateway(config)
+    assert "portal:8000" in (tmp_path / "default.conf").read_text()
+    write_gateway(config, 8999)
+    initialise_gateway(config)
+    assert "portal:8999" in (tmp_path / "default.conf").read_text()

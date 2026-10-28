@@ -1,12 +1,117 @@
 name: zenkai
 
+x-control-environment: &control-environment
+  DATABASE_URL: ${DATABASE_URL:-}
+  DATABASE_URL_UNPOOLED: ${DATABASE_URL_UNPOOLED:-}
+  OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+  OPENROUTER_MODEL: ${OPENROUTER_MODEL:-anthropic/claude-sonnet-5.5}
+  OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:?Run scripts/init_local.py}
+  SESSION_SECRET: ${SESSION_SECRET:?Run scripts/init_local.py}
+  LAB_TOKEN: ${LAB_TOKEN:?Run scripts/init_local.py}
+  AUTO_APPROVE_SAFE: ${AUTO_APPROVE_SAFE:-true}
+  TARGET_NAME: ${TARGET_NAME:-University portal · Demo target}
+  LOKI_SELECTOR: ${LOKI_SELECTOR:-}
+  LOKI_URL: http://loki:3100
+  PROMETHEUS_URL: http://prometheus:9090
+  GATEWAY_URL: http://gateway
+  PORTAL_URL: http://portal:8000
+  LOG_DIR: /var/log/zenkai
+  GATEWAY_CONFIG_DIR: /gateway
+
 services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: zenkai-backend:dev
+    environment: *control-environment
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./logs:/var/log/zenkai
+
+  worker:
+    image: zenkai-backend:dev
+    command: python -m zenkai.worker
+    environment: *control-environment
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gateway-config:/gateway
+      - ./logs:/var/log/zenkai
+    depends_on:
+      gateway:
+        condition: service_started
+
+  portal:
+    image: zenkai-backend:dev
+    command: uvicorn zenkai.portal:app --host 0.0.0.0 --port 8000
+    environment:
+      LAB_TOKEN: ${LAB_TOKEN:?Run scripts/init_local.py}
+      LOG_DIR: /var/log/zenkai
+      PORTAL_STATE_FILE: /state/portal.json
+    ports:
+      - "127.0.0.1:8100:8000"
+    volumes:
+      - portal-state:/state
+      - ./logs:/var/log/zenkai
+
+  init:
+    image: zenkai-backend:dev
+    command: python -m zenkai.bootstrap
+    environment:
+      GATEWAY_CONFIG_DIR: /gateway
+    volumes:
+      - gateway-config:/gateway
+      - load-scripts:/scripts
+
+  gateway:
+    image: zenkai-web:dev
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - gateway-config:/etc/nginx/conf.d:ro
+      - ./logs:/var/log/zenkai
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      portal:
+        condition: service_started
+
+  console:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: zenkai-web:dev
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      - api
+
+  load:
+    image: grafana/k6:1.3.0
+    profiles: ["load"]
+    container_name: zenkai-load
+    user: "0"
+    command: run -o experimental-prometheus-rw /scripts/traffic.js
+    labels:
+      zenkai.role: load
+    environment:
+      TARGET_URL: http://gateway
+      DURATION: 3m
+      RATE: 25
+      K6_PROMETHEUS_RW_SERVER_URL: http://prometheus:9090/api/v1/write
+      K6_PROMETHEUS_RW_TREND_STATS: p(95),avg
+    volumes:
+      - load-scripts:/scripts:ro
+      - load-results:/results
+
   prometheus:
     image: prom/prometheus:v3.15.1
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=3d
+      - --web.enable-remote-write-receiver
     ports:
       - "127.0.0.1:9090:9090"
     volumes:
@@ -59,6 +164,10 @@ services:
       - loki
 
 volumes:
+  gateway-config:
+  portal-state:
+  load-scripts:
+  load-results:
   prometheus-data:
   loki-data:
   alloy-data:

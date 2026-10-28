@@ -13,4 +13,6 @@ scrape_configs:
     static_configs:
       - targets: ["alloy:12345"]
 
-# Add application /metrics targets when the application is implemented.
+  - job_name: university-demo
+    static_configs:
+      - targets: ["portal:8000"]

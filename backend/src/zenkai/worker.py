@@ -131,6 +131,7 @@ class Worker:
         await self.update(incident_id, "executing", "Executing the validated action on the registered target", action=proposal.action)
         await self.connector.execute(proposal)
         await self.update(incident_id, "verifying", "Replaying correct-content probes while the load test continues")
+        await asyncio.sleep(5)  # Let post-repair metric samples replace the fault window.
         observations = []
         for _ in range(self.config.verification_samples):
             await asyncio.sleep(self.config.verification_interval)
@@ -139,11 +140,25 @@ class Worker:
             if not sample["healthy"] or sample["latency_ms"] > 1500:
                 raise ValueError("Post-repair request failed the recovery observation window")
         load = await asyncio.to_thread(self.load_status)
+        measurements = {}
+        if load["running"]:
+            async with httpx.AsyncClient(timeout=5) as client:
+                for key, expression in {
+                    "requests": 'sum(increase(zenkai_portal_requests_total[10s]))',
+                    "errors": 'sum(increase(zenkai_portal_requests_total{outcome!="success"}[10s]))',
+                }.items():
+                    response = await client.get(f"{self.config.prometheus_url}/api/v1/query", params={"query": expression})
+                    response.raise_for_status()
+                    values = response.json()["data"]["result"]
+                    measurements[key] = float(values[0]["value"][1]) if values else 0
+            if measurements["requests"] < 20 or measurements["errors"] / max(measurements["requests"], 1) > .05:
+                raise ValueError("Sustained-load verification failed: insufficient measured traffic or excessive errors")
         async with self.db.sessions() as session, session.begin():
             item = await session.get(Incident, incident_id)
             item.status, item.active_key, item.recovered_at = "recovered", None, time.time()
             record(session, "recovered", "Correct portal responses sustained across the verification window", incident_id,
-                   samples=observations, under_load=load["running"], duration_seconds=round(item.recovered_at - item.created_at, 2))
+                   samples=observations, under_load=load["running"], measurements=measurements,
+                   duration_seconds=round(item.recovered_at - item.created_at, 2))
         event(self.logger, "info", "Incident recovered and verified", incident_id=incident_id, action=proposal.action)
 
     def load_status(self):

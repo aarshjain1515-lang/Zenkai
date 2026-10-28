@@ -4,6 +4,7 @@ COPY pyproject.toml uv.lock ./
 COPY backend ./backend
 COPY alembic.ini ./
 COPY loadtests ./loadtests
+COPY scripts ./scripts
 RUN pip install --no-cache-dir uv==0.12.23 && uv sync --frozen --no-dev --no-cache
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 CMD ["uvicorn", "zenkai.api:app", "--host", "0.0.0.0", "--port", "8000"]

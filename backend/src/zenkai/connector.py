@@ -11,12 +11,14 @@ def gateway_config(port):
     return '''log_format zenkai escape=json '{"service":"gateway","level":"info","status":$status,"request":"$request_method $uri","duration":$request_time,"upstream":"$upstream_addr"}';
 server {
     listen 80;
+    resolver 127.0.0.11 valid=5s ipv6=off;
     root /usr/share/nginx/html;
     index index.html;
     access_log /var/log/zenkai/gateway.log zenkai;
     error_log /var/log/zenkai/gateway-error.log warn;
     location /api/ {
-        proxy_pass http://portal:PORT;
+        set $portal_host portal:PORT;
+        proxy_pass http://$portal_host$request_uri;
         proxy_connect_timeout 2s;
         proxy_read_timeout 5s;
     }
@@ -32,15 +34,19 @@ def read_gateway(config):
 
 def initialise_gateway(config):
     config.gateway_config_dir.mkdir(parents=True, exist_ok=True)
-    if not (config.gateway_config_dir / "default.conf").exists():
+    # Docker may seed a fresh volume with the web image's console config.
+    # Only our state marker proves the protected-target gateway was initialised.
+    if not (config.gateway_config_dir / "state.json").exists():
         write_gateway(config, 8000)
+    elif read_gateway(config).get("template_version") != 2:
+        write_gateway(config, read_gateway(config)["upstream_port"])
 
 
 def write_gateway(config, port):
     config.gateway_config_dir.mkdir(parents=True, exist_ok=True)
     state = read_gateway(config)
     for name, value in {"default.conf": gateway_config(port), "state.json": json.dumps({
-        "revision": state["revision"] + 1, "upstream_port": port})}.items():
+        "revision": state["revision"] + 1, "upstream_port": port, "template_version": 2})}.items():
         temporary = config.gateway_config_dir / f"{name}.tmp"
         temporary.write_text(value)
         temporary.replace(config.gateway_config_dir / name)

@@ -1,43 +1,203 @@
 {
   "uid": "zenkai-overview",
-  "title": "Zenkai / Observability Foundation",
-  "description": "Infrastructure telemetry and collected demo logs. Workflow healing metrics will be added with the recovery engine.",
+  "title": "Zenkai / Service recovery",
+  "description": "Live demo-target telemetry, k6 traffic, and Loki execution evidence. Recovery decisions are managed by the separate Zenkai console.",
   "schemaVersion": 39,
   "version": 1,
   "editable": false,
-  "tags": ["zenkai", "development"],
+  "tags": [
+    "zenkai",
+    "development"
+  ],
   "timezone": "browser",
   "refresh": "5s",
-  "time": {"from": "now-15m", "to": "now"},
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
       "type": "text",
       "title": "Foundation status",
-      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "options": {
         "mode": "markdown",
-        "content": "Prometheus + Grafana + Loki + Alloy are wired together. These panels show observability services and demo logs. The university connectors and AI recovery engine are planned work."
+        "content": "Zenkai is an independent recovery tool. This dashboard shows the separate demo target, the actual k6 workload, and collected service logs. AI diagnosis requires the configured OpenRouter key; incident persistence requires Neon."
       }
     },
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Observability scrape targets (1 = reachable)",
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4},
-      "datasource": {"type": "prometheus", "uid": "zenkai-prometheus"},
-      "targets": [{"refId": "A", "expr": "up", "legendFormat": "{{job}}"}],
-      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []},
-      "options": {"legend": {"displayMode": "list", "placement": "bottom"}}
+      "title": "Scrape targets (1 = reachable)",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "zenkai-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
     },
     {
       "id": 3,
       "type": "logs",
       "title": "Collected Zenkai logs (expand a line for JSON fields)",
-      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 12},
-      "datasource": {"type": "loki", "uid": "zenkai-loki"},
-      "targets": [{"refId": "A", "expr": "{service_name=\"zenkai-demo\"}", "queryType": "range"}],
-      "options": {"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "enableLogDetails": true}
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "zenkai-loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service_name=\"zenkai-demo\"}",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Portal request outcomes / second",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "zenkai-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(zenkai_portal_requests_total[30s])) by (outcome)",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Portal response time \u00b7 p95",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "zenkai-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum(rate(zenkai_portal_request_seconds_bucket[30s])) by (le))",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "k6 offered requests / second",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "zenkai-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(k6_http_reqs_total[30s]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
     }
   ]
 }
