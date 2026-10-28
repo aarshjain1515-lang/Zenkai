@@ -34,6 +34,24 @@
 .live-label { font-size: 13px; }
 .user-chip { min-width: 40px; height: 40px; font-size: 13px; }
 .user-chip:has(svg) { padding: 10px 13px; }
+.user-chip.demo-access {
+  width: auto;
+  min-width: max-content;
+  height: 40px;
+  padding: 0 14px;
+  gap: 8px;
+  border: 1px solid #dce6d8;
+  border-radius: 8px;
+  background: #edf4e8;
+  color: #426342;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.user-chip.demo-access:hover { background: #e3eedc; border-color: #bfd1b8; }
+
 .icon-button { min-width: 36px; min-height: 40px; }
 .main-wrap main { max-width: 1680px; padding: 40px 40px 0; }
 .page-heading { margin-bottom: 32px; align-items: center; }
