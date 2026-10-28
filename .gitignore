@@ -23,9 +23,11 @@ coverage/
 data/
 logs/
 runtime/
+work/
 .uv-cache/
 .ruff_cache/
 *.egg-info/
+*.tsbuildinfo
 *.log
 *.db
 *.db-*

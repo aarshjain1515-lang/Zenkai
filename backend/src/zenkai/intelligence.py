@@ -12,7 +12,7 @@ async def collect_evidence(config, snapshot, probe):
     async with httpx.AsyncClient(timeout=8) as client:
         try:
             response = await client.get(f"{config.loki_url}/loki/api/v1/query_range", params={
-                "query": '{service_name="zenkai-demo"} |~ "(?i)(error|failed|refused|capacity|schema|crash)"',
+                "query": config.loki_selector + ' |~ "(?i)(error|failed|refused|capacity|schema|crash)"',
                 "start": str(int((time.time() - 90) * 1e9)), "end": str(time.time_ns()), "limit": 80,
                 "direction": "backward",
             })

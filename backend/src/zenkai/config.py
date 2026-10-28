@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     loki_url: str = "http://localhost:3100"
     prometheus_url: str = "http://localhost:9090"
     gateway_url: str = "http://localhost:8080"
+    target_name: str = "University portal · Demo target"
+    loki_selector: str = '{service_name="zenkai-demo"}'
     portal_url: str = "http://localhost:8100"
     operator_password: str = ""
     session_secret: str = ""

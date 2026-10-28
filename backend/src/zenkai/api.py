@@ -106,7 +106,8 @@ def create_app(config=None, database=None):
                 load = load_row.value if load_row else {}
                 preference = await session.get(Preference, "autopilot")
                 autopilot = preference.value["enabled"] if preference else autopilot
-        return {"portal": portal, "metrics": metrics, "incidents": incidents, "timeline": timeline,
+        return {"target": {"name": config.target_name, "log_selector": config.loki_selector, "connector": "isolated-docker-demo"},
+                "portal": portal, "metrics": metrics, "incidents": incidents, "timeline": timeline,
                 "worker": worker, "load": load, "autopilot": autopilot, "now": time.time(),
                 "setup": {"database": database_ready, "model": bool(config.openrouter_api_key),
                           "missing": config.missing(), "model_name": config.openrouter_model}}

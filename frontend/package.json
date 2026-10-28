@@ -1,0 +1,16 @@
+{
+  "name": "zenkai-console",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {"dev": "vite --host 0.0.0.0", "build": "tsc -b && vite build", "preview": "vite preview --host 0.0.0.0"},
+  "dependencies": {
+    "react": "19.3.1", "react-dom": "19.3.1", "lucide-react": "1.26.0",
+    "recharts": "3.10.0", "@tanstack/react-query": "5.105.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0", "@types/react-dom": "19.3.0", "@types/node": "^24.0.0",
+    "@vitejs/plugin-react": "6.1.2", "typescript": "6.0.3", "vite": "8.3.5"
+  }
+}
