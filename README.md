@@ -12,7 +12,7 @@ Built for **CODE E FIESTA 2026 — Challenge 4: The Self-Healing AI Automation S
 
 **Repository and observability foundation.** Prometheus, Grafana, Loki, and Alloy are configured in Docker Compose with a provisioned dashboard. Their initial setup was verified with service readiness checks, metrics scraping, log ingestion, and Grafana data-source checks.
 
-The AI diagnosis engine, recovery executor, operational console, demo university service, failure injector, and k6 load-test scripts are **planned**. The repository does not yet demonstrate autonomous recovery or include a runnable k6 test.
+The application stack below is **selected, not yet implemented**. The frontend, FastAPI API, Neon database schema, AI diagnosis engine, recovery worker, demo university service, failure injector, and k6 load-test scripts are **planned**. No Neon project or database connection has been provisioned or verified by this repository yet. The repository does not yet demonstrate autonomous recovery or include a runnable k6 test.
 
 ## The problem
 
@@ -21,6 +21,87 @@ University services face bursts of demand during results, admissions, examinatio
 Zenkai brings detection, diagnosis, and recovery into one incident workflow. The central outcome is restored service health and successful requests under the continuing test workload. Fee processing and course-registration logic are outside the core MVP; a university portal is the service being protected.
 
 The system is intended for different universities through configured telemetry sources and authorised infrastructure connectors. It does not claim an existing integration with POD.ai or any specific university's production systems.
+
+## Selected application stack
+
+The MVP uses a Vite/React operations console, a FastAPI control API, a separate Python recovery worker, and **Neon PostgreSQL** for durable state. The existing observability stack supplies the evidence. k6 exercises the protected demo service throughout the failure and recovery.
+
+| Layer | Decision | Purpose |
+| --- | --- | --- |
+| Frontend | [Vite](https://vite.dev/guide/) + React + TypeScript | Service overview, live incident timeline, log evidence, patch diff, and approval controls |
+| UI and charts | Tailwind CSS + shadcn/ui + Lucide React + Recharts | Consistent dashboard components, icons, and lightweight metric charts |
+| Frontend data | TanStack Query + native browser EventSource | API state and cache invalidation, with Server-Sent Events (SSE) for live incident updates |
+| API | [FastAPI](https://fastapi.tiangolo.com/) + Python + Uvicorn | Typed HTTP endpoints for services, incidents, evidence, proposals, approvals, and events |
+| Validation and settings | Pydantic v2 + pydantic-settings | Request contracts, strict AI response schemas, action validation, and server-side configuration |
+| Database | [Neon PostgreSQL](https://neon.com/docs/guides/sqlalchemy) | Durable incidents, evidence snapshots, proposals, approvals, action attempts, jobs, and timeline events |
+| Database access | SQLAlchemy 2.x async + Psycopg 3 + Alembic | Typed persistence, asynchronous PostgreSQL access, and versioned schema migrations |
+| Background execution | Separate Python asyncio worker + PostgreSQL-backed job queue | Detection polling, diagnosis, retries, approval waits, execution, and recovery verification that survive an API restart |
+| AI | OpenRouter + Claude Sonnet 5.5, model ID `anthropic/claude-sonnet-5.5` | Evidence-based diagnosis and structured recovery proposals |
+| HTTP integrations | HTTPX async client | Query Loki and Prometheus, call OpenRouter, and run bounded service probes |
+| Recovery connector | Docker SDK for Python + constrained configuration handlers | Restart allowlisted demo containers and validate/apply approved gateway configuration changes |
+| Demo target | Small FastAPI university service behind Nginx | A real request path with controllable process, upstream-configuration, and overload faults |
+| Application telemetry | Python logging with JSON formatting + prometheus-client | Structured incident/action logs and application metrics for Alloy, Loki, and Prometheus |
+| Runtime | Docker Compose | Keep the control API, worker, observability services, and protected demo target separate |
+| Development tools | pnpm for frontend; uv for Python | Reproducible environments and committed lockfiles when application scaffolding is added |
+| Verification | pytest + HTTPX, Vitest + React Testing Library, Playwright, and k6 | Backend recovery-policy checks, important UI interactions, one end-to-end repair flow, and sustained load verification |
+
+Exact application dependency versions will be pinned in manifests and lockfiles during scaffolding. Existing observability images are already pinned in `compose.yaml`. A plain Python state machine and PostgreSQL job table are sufficient for the first recovery loop; Redis, Celery, an agent framework, embeddings, and a vector database are outside the MVP stack.
+
+### How the components connect
+
+```text
+React operations console
+    ↕ HTTP commands + SSE incident events
+FastAPI control API ────────────── Neon PostgreSQL
+                                      ↕ durable jobs and incident state
+                              Python recovery worker
+                                ├─ Loki HTTP API: relevant log window
+                                ├─ Prometheus HTTP API: metric context
+                                ├─ OpenRouter: structured diagnosis/proposal
+                                └─ Policy validator → registered recovery connector
+                                                           ↓
+k6 continuous traffic ──────────────────────── Nginx → Demo university service
+                                                           ↓
+                                              JSON logs + application metrics
+                                                           ↓
+                                              Alloy/Loki + Prometheus → Grafana
+```
+
+The React console owns the recovery experience. Grafana remains the deeper observability view. Both use actual backend and telemetry data; charts and timeline transitions must not be fabricated by the frontend.
+
+### OpenRouter and Loki diagnosis
+
+**Default model: [Claude Sonnet 5.5 through OpenRouter](https://openrouter.ai/anthropic/claude-sonnet-5.5).** The model ID and advertised structured-output support were checked against the [OpenRouter model catalogue](https://openrouter.ai/api/v1/models) on October 28, 2026. This is a model selection, not a completed evaluation of Zenkai incident-diagnosis quality or latency.
+
+The worker, rather than the model itself, queries Loki. For each deduplicated incident it builds a bounded evidence bundle: a service-scoped LogQL time window, representative error lines, recent metric summaries, probe results, and the current/known-good configuration diff. Cap the time range, line count, and payload size, and redact secrets before making the model request. Raw logs are untrusted evidence, never instructions to execute.
+
+Call OpenRouter directly through HTTPX using a strict JSON Schema response format and provider routing with `require_parameters: true`. Structured-output support is endpoint-specific, so verify that the selected route supports the required schema settings. See [structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs) and [provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
+
+The Pydantic-validated proposal contains the likely root cause, evidence IDs, registered target/action, optional constrained configuration patch, preconditions, and verification plan. The backend computes the policy decision and approval requirement; a model-supplied risk label cannot grant permission. An output that is valid JSON can still be factually wrong or unsafe and must pass the independent action validator.
+
+Use one diagnosis per incident with bounded model attempts, timeouts, and token budgets. If OpenRouter is unavailable or a proposal remains invalid, retain the incident and escalate without executing a new model-generated repair. Keep the model configurable through `OPENROUTER_MODEL`; changing it requires checking route compatibility and rerunning the repair scenarios. Do not silently replace a live diagnosis with a canned response.
+
+### Neon persistence and recovery jobs
+
+Neon PostgreSQL is the authoritative application store. Loki retains log streams and Prometheus retains metrics; PostgreSQL stores incident evidence snapshots and references, proposal versions, approval decisions, execution attempts, job leases, and ordered timeline events. Use relational constraints for unique action identities and JSONB for bounded evidence and patch documents.
+
+Use a pooled Neon `DATABASE_URL` for the API and worker, and a direct `DATABASE_URL_UNPOOLED` for Alembic migrations. Require TLS, keep application connection pools small, and use driver settings compatible with Neon's transaction pooler. Avoid session-level locks or `LISTEN/NOTIFY` on the pooled endpoint; SSE will read persisted timeline events using a resumable cursor. See [Neon connection pooling](https://neon.com/docs/connect/connection-pooling).
+
+The worker claims eligible jobs with a short transaction using `FOR UPDATE SKIP LOCKED`, records a lease and ownership token, and commits before calling a model or changing infrastructure. PostgreSQL documents this locking option for [queue-like tables](https://www.postgresql.org/docs/current/sql-select.html). Lease renewal and per-target ownership checks prevent competing workers from starting the same repair. Initial deployment uses one recovery worker.
+
+Recovery is an explicit state machine: `detected → diagnosing → proposed → validating → awaiting_approval (when required) → executing → verifying → recovered`, with blocked, retry-scheduled, and escalated outcomes. Approved jobs are enqueued transactionally with their approval record. An API response or an in-process FastAPI background task is not the durable job record.
+
+After a worker interruption, reconcile the target's actual state before retrying an uncertain action. Job processing is at least once; connector idempotency and reconciliation protect against duplicate effects. Never hold a database transaction open during an AI call or infrastructure action. If Neon cannot persist the required approval/action state, do not start a new mutation; reconcile any in-flight attempt after connectivity returns.
+
+### Execution and live UI boundaries
+
+The protected demo application and Nginx gateway run separately from the Zenkai control API and worker, so crashing the target does not intentionally crash its healer. Infrastructure credentials or Docker access belong only to the trusted recovery worker/connector, never to the browser or general API container. The Docker SDK accepts server-side allowlisted targets; model output cannot choose arbitrary container IDs or executable commands.
+
+Use a registered configuration handler to construct the Nginx change, run its syntax check and backend probe, and reload through a fixed operational routine. Store the proposal hash, configuration revision, and approval before execution. Validate recovery under continuing k6 traffic rather than relying on a successful restart command.
+
+Use SSE for the one-way incident timeline, with normal authenticated HTTP requests for approval/rejection and replay controls. Reconnect from persisted event IDs and refresh TanStack Query state as needed. The MVP has one configured operator, server-issued HttpOnly/SameSite session cookies, and CSRF protection for mutating requests. OpenRouter and Neon credentials stay server-side and must never use Vite's browser-exposed `VITE_` environment prefix.
+
+Planned server settings include `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `LOKI_URL`, `PROMETHEUS_URL`, and operator/session secrets. Application settings, credentials, schemas, workers, and migrations are not wired into the current Compose stack yet. Neon and OpenRouter require network access for the live demo; no local database fallback is selected.
 
 ## The recovery loop
 
@@ -103,7 +184,7 @@ Use Alloy for new log collection; [Promtail reached end of life on March 2, 2026
 
 Planned log fields include `timestamp`, `level`, `service`, `incident_id`, `request_id`, `action_id`, `step`, `outcome`, and `error_code`. Keep per-request and per-incident identifiers in log bodies, not metric or Loki labels. Redact credentials and personal data before collection or model use.
 
-A durable incident/action store will record recovery state, proposals, approvals, attempts, and verification results. Telemetry supports the investigation; it is not the sole audit record.
+Neon PostgreSQL will record recovery state, proposals, approvals, attempts, and verification results. Telemetry supports the investigation; it is not the sole audit record.
 
 ## k6 verification plan
 
