@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     database_url: str = ""
     database_url_unpooled: str = ""
     openrouter_api_key: str = ""
-    openrouter_model: str = "anthropic/claude-sonnet-5.5"
+    openrouter_model: str = "nvidia/nemotron-3.5-super-vl:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     loki_url: str = "http://localhost:3100"
     prometheus_url: str = "http://localhost:9090"

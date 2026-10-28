@@ -4,15 +4,15 @@ x-control-environment: &control-environment
   DATABASE_URL: ${DATABASE_URL:-}
   DATABASE_URL_UNPOOLED: ${DATABASE_URL_UNPOOLED:-}
   OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-  OPENROUTER_MODEL: ${OPENROUTER_MODEL:-anthropic/claude-sonnet-5.5}
+  OPENROUTER_MODEL: ${OPENROUTER_MODEL:-nvidia/nemotron-3.5-super-vl:free}
   OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:?Run scripts/init_local.py}
   SESSION_SECRET: ${SESSION_SECRET:?Run scripts/init_local.py}
   LAB_TOKEN: ${LAB_TOKEN:?Run scripts/init_local.py}
   AUTO_APPROVE_SAFE: ${AUTO_APPROVE_SAFE:-true}
   TARGET_NAME: ${TARGET_NAME:-University portal · Demo target}
   LOKI_SELECTOR: ${LOKI_SELECTOR:-}
-  LOKI_URL: http://loki:3100
-  PROMETHEUS_URL: http://prometheus:9090
+  LOKI_URL: ${LOKI_URL:-http://loki:3100}
+  PROMETHEUS_URL: ${PROMETHEUS_URL:-http://prometheus:9090}
   GATEWAY_URL: http://gateway
   PORTAL_URL: http://portal:8000
   LOG_DIR: /var/log/zenkai

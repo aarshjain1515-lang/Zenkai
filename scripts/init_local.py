@@ -9,7 +9,7 @@ existing = {line.split("=", 1)[0]: line.split("=", 1)[1] for line in lines if "=
 defaults = {
     "GRAFANA_ADMIN_PASSWORD": secrets.token_urlsafe(24),
     "DATABASE_URL": "", "DATABASE_URL_UNPOOLED": "", "OPENROUTER_API_KEY": "",
-    "OPENROUTER_MODEL": "anthropic/claude-sonnet-5.5",
+    "OPENROUTER_MODEL": "nvidia/nemotron-3.5-super-vl:free",
     "OPERATOR_PASSWORD": secrets.token_urlsafe(18), "SESSION_SECRET": secrets.token_urlsafe(32),
     "LAB_TOKEN": secrets.token_urlsafe(32), "AUTO_APPROVE_SAFE": "true",
 }

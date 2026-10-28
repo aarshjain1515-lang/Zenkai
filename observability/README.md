@@ -1,17 +1,15 @@
 # Local observability
 
-This is a development-only stack with pinned container versions. It provides real metrics collection, log ingestion, and a provisioned Grafana dashboard. It does not implement the server-recovery or AI diagnosis engine.
+This page documents the development observability services used by Zenkai V1. The full Compose application also includes the independent recovery tool and a separate demo target; see the root README for application and credential setup.
 
 ## Start
 
 Requirements: Docker Engine and the Docker Compose plugin. Run from the repository root:
 
 ```bash
-cp .env.example .env
-# Edit .env and set your own GRAFANA_ADMIN_PASSWORD before the first start.
-mkdir -p logs
-docker compose config --quiet
-docker compose up -d
+python3 scripts/init_local.py
+# Preserve the generated .env; add Neon and OpenRouter credentials there.
+bash scripts/start.sh
 ```
 
 Open [Grafana](http://localhost:3300/d/zenkai-overview) and sign in as `admin` with the password in `.env`. Prometheus and Loki are preconfigured as data sources. Existing Grafana volumes preserve the original login; changing `.env` later does not reset that account's password.
@@ -33,7 +31,7 @@ Append one fictional event (this tests collection, not AI healing):
 printf '%s\n' '{"level":"info","service":"zenkai-demo","event_id":"observability-smoke","step":"telemetry","outcome":"received","message":"Zenkai log pipeline is connected"}' >> logs/demo.log
 ```
 
-Allow a few seconds for collection. In the provisioned dashboard, verify the event appears and the three Prometheus scrape targets have value `1`.
+Allow a few seconds for collection. In the provisioned dashboard, verify the event appears and the four Prometheus scrape targets (the demo target is expected to go down during a process-crash test) have value `1`.
 
 In Grafana Explore, useful queries are:
 
@@ -63,16 +61,25 @@ docker compose exec alloy alloy validate /etc/alloy/config.alloy
 ## Application integration
 
 - Write newline-delimited JSON into `logs/*.log`; Alloy mounts this directory read-only and forwards lines to Loki.
-- Expose application metrics and add their network-reachable targets to `prometheus/prometheus.yml` when the application exists. Container `localhost` is the container itself, not the host.
+- The demo service exposes `/metrics` and is scraped as `university-demo`. Add network-reachable targets for additional registered services. Container `localhost` is the container itself, not the host.
 - Use low-cardinality metric labels such as service, action type, and outcome. Do not label by student, event, or incident ID.
 - Preserve incident, proposal, approval, and action state in a durable store; telemetry supports the investigation and does not replace the recovery audit trail.
 - Add application availability, error rate, latency, resource pressure, action rejection, and verified-recovery panels only when those metrics are actually emitted.
 
 Alloy checkpoints and service data persist in Docker volumes. Prometheus retains three days of metrics. Loki currently has no automatic log-retention policy; use small fictional demo data and clean up deliberately when finished.
 
-## Planned k6 integration
+## k6 traffic
 
-Grafana k6 will generate controlled traffic against the demo university service and measure baseline, fault, and recovery windows. The current Compose stack does not include k6, application traffic targets, or k6 metric export. Scripts and integration instructions will be added with implementation; see the root README for acceptance criteria.
+Use the Zenkai failure lab after connecting Neon and signing in, or start the prepared workload directly:
+
+```bash
+docker compose --profile load up -d load
+docker compose logs --tail=30 load
+```
+
+The bounded workload sends 25 requests/second for three minutes, checks response content, and exports real k6 metrics to Prometheus. Stop it after the demo with `docker compose stop load`. The summary is stored in the `load-results` volume at `/results/latest.json` inside `zenkai-load`.
+
+Intentional outages produce failed response checks. The load-generation threshold requires zero dropped iterations; recovery is evaluated independently by the worker over a post-repair observation window. The explicit integration harness uses a labelled fixture model, never a live-model substitute in the running application.
 
 ## Stop
 
@@ -80,7 +87,7 @@ Grafana k6 will generate controlled traffic against the demo university service 
 docker compose down
 ```
 
-This keeps persisted service data. `docker compose down -v` also deletes the stack's volumes, including Grafana settings and stored telemetry; use it only when you intend to reset this demo. Host files under `logs/` remain.
+This keeps persisted service data. `docker compose down -v` also deletes the stack's volumes, including Grafana settings, stored telemetry, demo target state, gateway configuration, and load results; use it only when you intend to reset this demo. Host files under `logs/` remain.
 
 ## References
 
