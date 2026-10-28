@@ -28,6 +28,8 @@ Implemented:
 
 **Live model diagnosis requires your OpenRouter key.** The model client is implemented and contract-tested; the container integration harness uses an explicitly labelled fixture model and disposable local PostgreSQL. It never substitutes a canned model response in the running app. PostgreSQL credentials, live connections, and model keys are local configuration, not repository content.
 
+**Live provider check passed:** Neon persistence, live NVIDIA/OpenRouter diagnosis, and an upstream repair verified under continuing k6 traffic. See [the verification record](docs/live-verification.md) for measured results and scope.
+
 ## Run locally
 
 Requirements: Docker Engine with Compose, Node.js compatible with Vite, pnpm, uv, and Python 3.12 managed by uv.
