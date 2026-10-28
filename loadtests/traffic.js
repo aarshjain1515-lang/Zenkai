@@ -6,7 +6,7 @@ import { check } from 'k6';
 const rate = Math.min(60, Math.max(1, Number(__ENV.RATE || 25)));
 export const options = {
   scenarios: { campus: { executor: 'constant-arrival-rate', rate, timeUnit: '1s',
-    duration: __ENV.DURATION || '3m', preAllocatedVUs: 30, maxVUs: 80 } },
+    duration: __ENV.DURATION || '3m', preAllocatedVUs: 110, maxVUs: 128 } },
   thresholds: { dropped_iterations: ['count==0'] },
   tags: { application: 'zenkai-campus', test_kind: 'controlled-demo' },
 };

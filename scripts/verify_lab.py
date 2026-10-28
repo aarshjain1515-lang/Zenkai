@@ -5,6 +5,9 @@ zenkai-test-db/zenkai_test database. It never substitutes a model in the running
 """
 import asyncio
 import os
+import io
+import json
+import tarfile
 from unittest.mock import patch
 
 from sqlalchemy import delete, select
@@ -86,6 +89,14 @@ async def run():
         await asyncio.to_thread(worker.control_load, False)
         heartbeat.cancel()
         await worker.db.engine.dispose()
+    import docker
+    load = docker.from_env().containers.get("zenkai-load")
+    chunks, _ = load.get_archive("/results/latest.json")
+    with tarfile.open(fileobj=io.BytesIO(b"".join(chunks))) as archive:
+        summary = json.load(archive.extractfile(archive.getmembers()[0]))
+    dropped = summary["metrics"].get("dropped_iterations", {}).get("values", {}).get("count", 0)
+    assert dropped == 0, f"Load generator dropped {dropped} iterations"
+    print(f"PASS load generation: {summary['metrics']['http_reqs']['values']['count']} requests, zero dropped iterations", flush=True)
 
 
 asyncio.run(run())
